@@ -16,23 +16,18 @@
      SETUP REQUIRED: paste your own Firebase config below.
      See the setup instructions Claude gave you alongside this file.
      ============================================================ -->
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCsKDspNeajWvdK3XgxKyYOXvEhsT9Eaag",
   authDomain: "lfc-tickets-e2231.firebaseapp.com",
   projectId: "lfc-tickets-e2231",
   storageBucket: "lfc-tickets-e2231.firebasestorage.app",
   messagingSenderId: "152403887031",
-  appId: "1:152403887031:web:e5bae371177b113c065e32"
+  appId: "1:152403887031:web:e5bae371177b113c065e32",
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
