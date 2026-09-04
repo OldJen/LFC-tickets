@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Liverpool Home Tickets</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+
+<div id="app">
+  <div class="min-h-screen flex items-center justify-center text-gray-400 text-sm">Loading fixtures…</div>
+</div>
+
+<!-- ============================================================
+     SETUP REQUIRED: paste your own Firebase config below.
+     See the setup instructions Claude gave you alongside this file.
+     ============================================================ -->
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCsKDspNeajWvdK3XgxKyYOXvEhsT9Eaag",
+  authDomain: "lfc-tickets-e2231.firebaseapp.com",
+  projectId: "lfc-tickets-e2231",
+  storageBucket: "lfc-tickets-e2231.firebasestorage.app",
+  messagingSenderId: "152403887031",
+  appId: "1:152403887031:web:e5bae371177b113c065e32"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const docRef = doc(db, "liverpool-tickets", "data");
+
+/* ---------- Kit colours ---------- */
+const KITS = {
+  "Liverpool":              { primary: "#C8102E", trim: "#FFFFFF" },
+  "Nottingham Forest":      { primary: "#DD0000", trim: "#FFFFFF" },
+  "Fulham":                 { primary: "#FFFFFF", trim: "#1A1A1A", outline: true },
+  "AFC Bournemouth":        { primary: "#B50E12", trim: "#1A1A1A" },
+  "Manchester City":        { primary: "#6CABDD", trim: "#1C2C5B" },
+  "Brentford":               { primary: "#D2001C", trim: "#FFFFFF" },
+  "Brighton & Hove Albion": { primary: "#0057B8", trim: "#FFFFFF" },
+  "Arsenal":                { primary: "#EF0107", trim: "#FFFFFF" },
+  "Manchester United":      { primary: "#F5F3F7", trim: "#4B2E5A", outline: true },
+  "Everton":                { primary: "#003399", trim: "#FFFFFF" },
+  "Sunderland":             { primary: "#EB172B", trim: "#FFFFFF" },
+  "Leeds United":           { primary: "#FFFFFF", trim: "#1D4EA8", outline: true },
+  "Tottenham Hotspur":      { primary: "#FFFFFF", trim: "#132257", outline: true },
+  "Coventry City":          { primary: "#78D0F2", trim: "#1A1A1A" },
+  "Crystal Palace":         { primary: "#1B458F", trim: "#C4122E" },
+  "Hull City":              { primary: "#1A1A1A", trim: "#F5A623" },
+  "Newcastle United":       { primary: "#1A1A1A", trim: "#FFFFFF" },
+  "Chelsea":                { primary: "#034694", trim: "#FFFFFF" },
+  "Atlético Madrid":        { primary: "#CB3524", trim: "#FFFFFF" },
+  "Villarreal":             { primary: "#FFE667", trim: "#274BA6" },
+  "FC Porto":               { primary: "#003DA5", trim: "#FFFFFF" },
+  "RC Lens":                { primary: "#FFD400", trim: "#C8102E" },
+};
+const DEFAULT_KIT = { primary: "#9CA3AF", trim: "#FFFFFF" };
+
+const COMP_COLORS = {
+  "Premier League": "#3D1560",
+  "Champions League": "#0A1A4D",
+  "Carabao Cup": "#00594C",
+  "FA Cup": "#8C1D40",
+};
+
+const DATA_VERSION = 2;
+
+const SEED_FIXTURES = [
+  { id: "pl-20260829-nfo", competition: "Premier League", opponent: "Nottingham Forest", date: "2026-08-29", kickoff: "12:30", status: "FT", score: { home: 2, away: 2 } },
+  { id: "ucl-20260909-atm", competition: "Champions League", opponent: "Atlético Madrid", date: "2026-09-09", kickoff: "20:00", status: "scheduled", score: null },
+  { id: "pl-20260912-ful", competition: "Premier League", opponent: "Fulham", date: "2026-09-12", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "cc-20260916-tot", competition: "Carabao Cup", opponent: "Tottenham Hotspur", date: "2026-09-16", kickoff: "20:00", status: "scheduled", score: null },
+  { id: "pl-20261011-mci", competition: "Premier League", opponent: "Manchester City", date: "2026-10-11", kickoff: "16:30", status: "scheduled", score: null },
+  { id: "ucl-20261020-vil", competition: "Champions League", opponent: "Villarreal", date: "2026-10-20", kickoff: "20:00", status: "scheduled", score: null },
+  { id: "pl-20261024-bha", competition: "Premier League", opponent: "Brighton & Hove Albion", date: "2026-10-24", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20261101-ars", competition: "Premier League", opponent: "Arsenal", date: "2026-11-01", kickoff: "16:30", status: "scheduled", score: null },
+  { id: "pl-20261121-mun", competition: "Premier League", opponent: "Manchester United", date: "2026-11-21", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20261202-sun", competition: "Premier League", opponent: "Sunderland", date: "2026-12-02", kickoff: "20:00", status: "scheduled", score: null },
+  { id: "pl-20261212-lee", competition: "Premier League", opponent: "Leeds United", date: "2026-12-12", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20261219-tot", competition: "Premier League", opponent: "Tottenham Hotspur", date: "2026-12-19", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "ucl-20261209-por", competition: "Champions League", opponent: "FC Porto", date: "2026-12-09", kickoff: "20:00", status: "scheduled", score: null },
+  { id: "pl-20270102-cov", competition: "Premier League", opponent: "Coventry City", date: "2027-01-02", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20270116-cry", competition: "Premier League", opponent: "Crystal Palace", date: "2027-01-16", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "ucl-20270127-len", competition: "Champions League", opponent: "RC Lens", date: "2027-01-27", kickoff: "20:00", status: "scheduled", score: null },
+  { id: "pl-20270130-eve", competition: "Premier League", opponent: "Everton", date: "2027-01-30", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20270220-hul", competition: "Premier League", opponent: "Hull City", date: "2027-02-20", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20270410-new", competition: "Premier League", opponent: "Newcastle United", date: "2027-04-10", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20270501-che", competition: "Premier League", opponent: "Chelsea", date: "2027-05-01", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20270515-bre", competition: "Premier League", opponent: "Brentford", date: "2027-05-15", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20270530-bou", competition: "Premier League", opponent: "AFC Bournemouth", date: "2027-05-30", kickoff: "16:00", status: "scheduled", score: null },
+];
+
+const NAME_SUGGESTIONS = ["Brian", "Ian", "Kev"];
+let currentFixtures = [];
+let currentFilter = "All";
+
+function kitSvg(team, dimmed) {
+  const kit = KITS[team] || DEFAULT_KIT;
+  const opacity = dimmed ? 0.45 : 1;
+  return `<svg width="22" height="22" viewBox="0 0 52 52" style="opacity:${opacity}" class="flex-shrink-0">
+    <path d="M18 6 L26 12 L34 6 L44 12 L40 22 L34 19 L34 46 L18 46 L18 19 L12 22 L8 12 Z" fill="${kit.primary}" stroke="${kit.outline ? "#B8BCC4" : "none"}" stroke-width="${kit.outline ? 1.3 : 0}"/>
+    <path d="M22 6 C22 6 24 10 26 10 C28 10 30 6 30 6" fill="none" stroke="${kit.trim}" stroke-width="1.3"/>
+  </svg>`;
+}
+
+function dateLabel(dateStr) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+}
+
+async function saveFixtures(fixtures) {
+  currentFixtures = fixtures;
+  try {
+    await setDoc(docRef, { fixtures, lastUpdated: new Date().toISOString(), version: DATA_VERSION });
+  } catch (err) {
+    console.error("Save failed", err);
+  }
+}
+
+function updateTicket(id, field, value) {
+  const next = currentFixtures.map((f) => (f.id === id ? { ...f, [field]: value } : f));
+  saveFixtures(next);
+}
+
+function render() {
+  const filtered = currentFilter === "All" ? currentFixtures : currentFixtures.filter((f) => f.competition === currentFilter);
+  const comps = [];
+  currentFixtures.forEach((f) => { if (!comps.includes(f.competition)) comps.push(f.competition); });
+
+  const byComp = {};
+  filtered.forEach((f) => { (byComp[f.competition] = byComp[f.competition] || []).push(f); });
+  Object.values(byComp).forEach((arr) => arr.sort((a, b) => a.date.localeCompare(b.date)));
+
+  const filterHtml = ["All", ...comps].map((c) => `
+    <button data-filter="${c}" class="filter-btn text-sm px-3 py-1.5 rounded-full border ${c === currentFilter ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-300"}">${c}</button>
+  `).join("");
+
+  const groupsHtml = comps.filter((c) => byComp[c]).map((comp) => {
+    const rows = byComp[comp].map((f) => {
+      const played = f.status === "FT" && f.score;
+      const textClass = played ? "text-gray-400" : "text-gray-900";
+      return `
+      <div class="border-b border-gray-100 last:border-b-0 ${played ? "bg-gray-50/60" : ""}">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              ${kitSvg("Liverpool", played)}
+              <span class="font-medium ${textClass}">Liverpool</span>
+              ${played ? `<span class="text-sm text-gray-400">${f.score.home}-${f.score.away}</span>` : `<span class="text-sm text-gray-400">v</span>`}
+              <span class="font-medium ${textClass}">${f.opponent}</span>
+              ${kitSvg(f.opponent, played)}
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5 ml-[26px]">${dateLabel(f.date)}${f.kickoff ? `, ${f.kickoff}` : ""}${f.status === "FT" ? " · FT" : ""}${f.status === "postponed" ? " · Postponed" : ""}</p>
+          </div>
+          <div class="flex gap-2 sm:flex-shrink-0">
+            <input type="text" value="${f.ticket1 || ""}" data-id="${f.id}" data-field="ticket1" class="ticket-input w-full sm:w-28 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-600" autocomplete="off" />
+            <input type="text" value="${f.ticket2 || ""}" placeholder="Name" data-id="${f.id}" data-field="ticket2" class="ticket-input w-full sm:w-28 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-600" autocomplete="off" />
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    return `
+    <div class="mb-6">
+      <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color:${COMP_COLORS[comp] || "#374151"}">${comp}</p>
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden" style="border-left:4px solid ${COMP_COLORS[comp] || "#9CA3AF"}">
+        ${rows}
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="min-h-screen bg-gray-50">
+      <header class="bg-red-700 text-white px-4 py-3 sticky top-0 z-30 shadow-sm">
+        <h1 class="text-lg font-semibold leading-tight">Liverpool Home Tickets</h1>
+        <p class="text-xs text-red-100">Fixtures update when Claude refreshes this file</p>
+      </header>
+      <main class="max-w-2xl mx-auto px-4 py-4">
+        <div class="flex gap-2 mb-4 flex-wrap">${filterHtml}</div>
+        ${groupsHtml || `<p class="text-sm text-gray-400 text-center py-12">No fixtures in this competition yet.</p>`}
+      </main>
+    </div>`;
+
+  document.querySelectorAll(".filter-btn").forEach((btn) => {
+    btn.addEventListener("click", () => { currentFilter = btn.dataset.filter; render(); });
+  });
+  document.querySelectorAll(".ticket-input").forEach((input) => {
+    input.addEventListener("focus", (e) => e.target.select());
+    input.addEventListener("blur", (e) => {
+      const { id, field } = e.target.dataset;
+      updateTicket(id, field, e.target.value.trim());
+    });
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
+  });
+}
+
+/* ---------- Load + live sync ---------- */
+async function init() {
+  try {
+    const snap = await getDoc(docRef);
+    const stored = snap.exists() ? snap.data() : null;
+
+    if (stored && stored.version === DATA_VERSION) {
+      currentFixtures = stored.fixtures;
+    } else {
+      const ticketMap = {};
+      (stored?.fixtures || []).forEach((f) => { ticketMap[f.id] = { ticket1: f.ticket1, ticket2: f.ticket2 }; });
+      const merged = SEED_FIXTURES.map((f) => ({
+        ...f,
+        ticket1: ticketMap[f.id]?.ticket1 ?? "Brian",
+        ticket2: ticketMap[f.id]?.ticket2 ?? "",
+      }));
+      currentFixtures = merged;
+      await saveFixtures(merged);
+    }
+    render();
+
+    // Live sync: any change anyone makes reflects for everyone without a manual refresh
+    onSnapshot(docRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (JSON.stringify(data.fixtures) !== JSON.stringify(currentFixtures)) {
+          currentFixtures = data.fixtures;
+          render();
+        }
+      }
+    });
+  } catch (err) {
+    document.getElementById("app").innerHTML = `<div class="min-h-screen flex items-center justify-center text-red-600 text-sm px-6 text-center">
+      Couldn't connect to storage. Check the Firebase config at the top of this file has been filled in correctly.<br/><br/>
+      <span class="text-gray-400">${err.message}</span>
+    </div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
