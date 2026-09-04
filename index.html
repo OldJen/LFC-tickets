@@ -156,8 +156,18 @@ function render() {
             <p class="text-xs text-gray-400 mt-0.5 ml-[26px]">${dateLabel(f.date)}${f.kickoff ? `, ${f.kickoff}` : ""}${f.status === "FT" ? " · FT" : ""}${f.status === "postponed" ? " · Postponed" : ""}</p>
           </div>
           <div class="flex gap-2 sm:flex-shrink-0">
-            <input type="text" value="${f.ticket1 || ""}" data-id="${f.id}" data-field="ticket1" class="ticket-input w-full sm:w-28 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-600" autocomplete="off" />
-            <input type="text" value="${f.ticket2 || ""}" placeholder="Name" data-id="${f.id}" data-field="ticket2" class="ticket-input w-full sm:w-28 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-600" autocomplete="off" />
+            <div class="relative w-full sm:w-28">
+              <input type="text" value="${f.ticket1 || ""}" data-id="${f.id}" data-field="ticket1" class="ticket-input w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-600" autocomplete="off" />
+              <div class="combo-panel hidden absolute z-20 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg overflow-hidden">
+                ${NAME_SUGGESTIONS.map((n) => `<div class="combo-option px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-100">${n}</div>`).join("")}
+              </div>
+            </div>
+            <div class="relative w-full sm:w-28">
+              <input type="text" value="${f.ticket2 || ""}" placeholder="Name" data-id="${f.id}" data-field="ticket2" class="ticket-input w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-600" autocomplete="off" />
+              <div class="combo-panel hidden absolute z-20 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg overflow-hidden">
+                ${NAME_SUGGESTIONS.map((n) => `<div class="combo-option px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-100">${n}</div>`).join("")}
+              </div>
+            </div>
           </div>
         </div>
       </div>`;
@@ -176,7 +186,6 @@ function render() {
     <div class="min-h-screen bg-gray-50">
       <header class="bg-red-700 text-white px-4 py-3 sticky top-0 z-30 shadow-sm">
         <h1 class="text-lg font-semibold leading-tight">Liverpool Home Tickets</h1>
-        <p class="text-xs text-red-100">Fixtures update when Claude refreshes this file</p>
       </header>
       <main class="max-w-2xl mx-auto px-4 py-4">
         <div class="flex gap-2 mb-4 flex-wrap">${filterHtml}</div>
@@ -188,12 +197,23 @@ function render() {
     btn.addEventListener("click", () => { currentFilter = btn.dataset.filter; render(); });
   });
   document.querySelectorAll(".ticket-input").forEach((input) => {
-    input.addEventListener("focus", (e) => e.target.select());
+    const panel = input.nextElementSibling;
+    input.addEventListener("focus", (e) => { e.target.select(); panel.classList.remove("hidden"); });
     input.addEventListener("blur", (e) => {
       const { id, field } = e.target.dataset;
       updateTicket(id, field, e.target.value.trim());
+      setTimeout(() => panel.classList.add("hidden"), 100);
     });
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
+    panel.querySelectorAll(".combo-option").forEach((opt) => {
+      opt.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        input.value = opt.textContent;
+        const { id, field } = input.dataset;
+        updateTicket(id, field, opt.textContent);
+        panel.classList.add("hidden");
+      });
+    });
   });
 }
 
