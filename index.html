@@ -240,13 +240,23 @@ async function init() {
     if (stored && stored.version === DATA_VERSION) {
       currentFixtures = stored.fixtures;
     } else {
+      const storedFixtures = stored?.fixtures || [];
       const ticketMap = {};
-      (stored?.fixtures || []).forEach((f) => { ticketMap[f.id] = { ticket1: f.ticket1, ticket2: f.ticket2 }; });
-      const merged = SEED_FIXTURES.map((f) => ({
-        ...f,
-        ticket1: ticketMap[f.id]?.ticket1 ?? "Brian",
-        ticket2: ticketMap[f.id]?.ticket2 ?? "",
-      }));
+      storedFixtures.forEach((f) => { ticketMap[f.id] = { ticket1: f.ticket1, ticket2: f.ticket2 }; });
+
+      // A client running older code (older SEED_FIXTURES) must never erase fixtures
+      // that newer code already saved - carry those forward untouched instead of dropping them.
+      const knownIds = new Set(SEED_FIXTURES.map((f) => f.id));
+      const unknownFixtures = storedFixtures.filter((f) => !knownIds.has(f.id));
+
+      const merged = [
+        ...SEED_FIXTURES.map((f) => ({
+          ...f,
+          ticket1: ticketMap[f.id]?.ticket1 ?? "Brian",
+          ticket2: ticketMap[f.id]?.ticket2 ?? "",
+        })),
+        ...unknownFixtures,
+      ];
       currentFixtures = merged;
       await saveFixtures(merged);
     }
