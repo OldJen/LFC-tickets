@@ -180,7 +180,7 @@ function render() {
     return `
     <div class="mb-6">
       <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color:${COMP_COLORS[comp] || "#374151"}">${comp}</p>
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden" style="border-left:4px solid ${COMP_COLORS[comp] || "#9CA3AF"}">
+      <div class="ticket-group bg-white rounded-xl border border-gray-200 overflow-hidden" style="border-left:4px solid ${COMP_COLORS[comp] || "#9CA3AF"}">
         ${rows}
       </div>
     </div>`;
@@ -202,7 +202,17 @@ function render() {
   });
   document.querySelectorAll(".ticket-input").forEach((input) => {
     const panel = input.nextElementSibling;
-    input.addEventListener("focus", (e) => { e.target.select(); panel.classList.remove("hidden"); });
+    input.addEventListener("focus", (e) => {
+      e.target.select();
+      panel.classList.remove("hidden", "mt-1", "bottom-full", "mb-1");
+      const group = input.closest(".ticket-group");
+      const spaceBelow = group.getBoundingClientRect().bottom - e.target.getBoundingClientRect().bottom;
+      if (spaceBelow < panel.offsetHeight) {
+        panel.classList.add("bottom-full", "mb-1");
+      } else {
+        panel.classList.add("mt-1");
+      }
+    });
     input.addEventListener("blur", (e) => {
       const { id, field } = e.target.dataset;
       updateTicket(id, field, e.target.value.trim());
