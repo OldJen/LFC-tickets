@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Liverpool Home Tickets 26/27</title>
+<title>Liverpool Home Tickets</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -39,6 +39,8 @@ const KITS = {
   "Nottingham Forest":      { primary: "#DD0000", trim: "#FFFFFF" },
   "Fulham":                 { primary: "#FFFFFF", trim: "#1A1A1A", outline: true },
   "AFC Bournemouth":        { primary: "#B50E12", trim: "#1A1A1A" },
+  "Aston Villa":            { primary: "#670E36", trim: "#95BFE5" },
+  "Ipswich Town":           { primary: "#0044A9", trim: "#FFFFFF" },
   "Manchester City":        { primary: "#6CABDD", trim: "#1C2C5B" },
   "Brentford":               { primary: "#D2001C", trim: "#FFFFFF" },
   "Brighton & Hove Albion": { primary: "#0057B8", trim: "#FFFFFF" },
@@ -67,7 +69,7 @@ const COMP_COLORS = {
   "FA Cup": "#8C1D40",
 };
 
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 
 const SEED_FIXTURES = [
   { id: "pl-20260829-nfo", competition: "Premier League", opponent: "Nottingham Forest", date: "2026-08-29", kickoff: "12:30", status: "FT", score: { home: 2, away: 2 } },
@@ -88,6 +90,8 @@ const SEED_FIXTURES = [
   { id: "ucl-20270127-len", competition: "Champions League", opponent: "RC Lens", date: "2027-01-27", kickoff: "20:00", status: "scheduled", score: null },
   { id: "pl-20270130-eve", competition: "Premier League", opponent: "Everton", date: "2027-01-30", kickoff: "15:00", status: "scheduled", score: null },
   { id: "pl-20270220-hul", competition: "Premier League", opponent: "Hull City", date: "2027-02-20", kickoff: "15:00", status: "scheduled", score: null },
+  { id: "pl-20270303-avl", competition: "Premier League", opponent: "Aston Villa", date: "2027-03-03", kickoff: "20:00", status: "scheduled", score: null },
+  { id: "pl-20270313-ips", competition: "Premier League", opponent: "Ipswich Town", date: "2027-03-13", kickoff: "15:00", status: "scheduled", score: null },
   { id: "pl-20270410-new", competition: "Premier League", opponent: "Newcastle United", date: "2027-04-10", kickoff: "15:00", status: "scheduled", score: null },
   { id: "pl-20270501-che", competition: "Premier League", opponent: "Chelsea", date: "2027-05-01", kickoff: "15:00", status: "scheduled", score: null },
   { id: "pl-20270515-bre", competition: "Premier League", opponent: "Brentford", date: "2027-05-15", kickoff: "15:00", status: "scheduled", score: null },
@@ -185,7 +189,7 @@ function render() {
   document.getElementById("app").innerHTML = `
     <div class="min-h-screen bg-gray-50">
       <header class="bg-red-700 text-white px-4 py-3 sticky top-0 z-30 shadow-sm">
-        <h1 class="text-lg font-semibold leading-tight">Liverpool Home Tickets 26/27</h1>
+        <h1 class="text-lg font-semibold leading-tight">Liverpool Home Tickets</h1>
       </header>
       <main class="max-w-2xl mx-auto px-4 py-4">
         <div class="flex gap-2 mb-4 flex-wrap">${filterHtml}</div>
