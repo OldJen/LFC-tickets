@@ -4,12 +4,246 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Liverpool Home Tickets</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --accent: oklch(0.38 0.16 22);
+    --accent-hover: oklch(0.35 0.15 22);
+    --page-bg: oklch(0.96 0.005 20);
+    --ink: oklch(0.22 0.015 20);
+    --ink-input: oklch(0.25 0.015 20);
+    --ink-muted: oklch(0.5 0.02 20);
+    --ink-muted-2: oklch(0.52 0.02 20);
+    --ink-subtle: oklch(0.55 0.02 20);
+    --ink-faint: oklch(0.58 0.02 20);
+    --month-label: oklch(0.45 0.02 20);
+    --border: oklch(0.91 0.008 20);
+    --border-strong: oklch(0.89 0.008 20);
+    --border-tab: oklch(0.88 0.008 20);
+    --border-dashed: oklch(0.86 0.01 20);
+    --border-empty: oklch(0.82 0.012 20);
+    --border-hover: oklch(0.84 0.01 20);
+    --border-hairline: oklch(0.4 0.02 20 / 0.3);
+    --surface-muted: oklch(0.975 0.004 20);
+    --surface-locked: oklch(0.955 0.005 20);
+    --score-bg: oklch(0.28 0.02 20);
+    --focus-ring: oklch(0.55 0.14 22);
+    --past-ink: oklch(0.45 0.02 20);
+    --past-dim: oklch(0.6 0.02 20);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Inter Tight", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--page-bg);
+    color: var(--ink);
+  }
+  a { color: var(--accent); }
+  a:hover { color: var(--accent-hover); }
+
+  .loading-state, .error-state {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-subtle);
+  }
+  .error-state { color: oklch(0.5 0.18 25); }
+  .error-state .error-detail { color: var(--ink-faint); margin-top: 10px; }
+
+  .page { min-height: 100vh; padding-bottom: 64px; }
+
+  .header { background: var(--accent); color: #fff; padding: 26px 24px 22px; }
+  .header-inner {
+    max-width: 880px; margin: 0 auto;
+    display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .badge {
+    width: 40px; height: 40px; border-radius: 6px; background: #fff; flex: none;
+    display: grid; place-items: center;
+    font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 22px;
+    color: var(--accent); letter-spacing: -0.5px;
+  }
+  .title { font-family: "Barlow Condensed", sans-serif; font-size: 30px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; line-height: 1; }
+  .subtitle { font-size: 13px; opacity: 0.82; margin-top: 3px; }
+  .stats { display: flex; gap: 26px; }
+  .stat-value { font-family: "Barlow Condensed", sans-serif; font-size: 26px; font-weight: 700; line-height: 1; }
+  .stat-label { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; opacity: 0.75; margin-top: 2px; }
+
+  .filters {
+    position: sticky; top: 0; z-index: 5;
+    background: oklch(0.96 0.005 20 / 0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-tab); padding: 12px 24px;
+  }
+  .filters-inner { max-width: 880px; margin: 0 auto; display: flex; flex-wrap: nowrap; align-items: center; gap: 16px; }
+  .tabs {
+    display: flex; flex-wrap: nowrap; gap: 8px; flex: 1; min-width: 0;
+    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 22px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 22px), transparent 100%);
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
+    font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; flex: none;
+    background: #fff; color: oklch(0.35 0.02 20); border: 1px solid var(--border-tab);
+    transition: all 0.14s ease;
+  }
+  .tab:hover { border-color: oklch(0.6 0.05 20); }
+  .tab-active, .tab-active:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tab-count { opacity: 0.55; font-variant-numeric: tabular-nums; }
+
+  .toggle { display: flex; align-items: center; gap: 9px; padding: 4px; border: none; background: transparent; cursor: pointer; font-family: inherit; margin-left: auto; }
+  .toggle-label { font-size: 12.5px; font-weight: 500; color: var(--ink-subtle); transition: color 0.16s ease; }
+  .toggle[aria-checked="true"] .toggle-label { color: oklch(0.38 0.02 20); }
+  .toggle-track {
+    position: relative; flex: none; width: 36px; height: 21px; border-radius: 999px;
+    background: oklch(0.85 0.01 20); transition: background 0.18s ease;
+  }
+  .toggle-track.toggle-on { background: var(--accent); }
+  .toggle-knob {
+    position: absolute; top: 2px; left: 2px; width: 17px; height: 17px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px oklch(0.3 0.02 20 / 0.3); transition: left 0.18s ease;
+  }
+  .toggle-track.toggle-on .toggle-knob { left: 17px; }
+
+  .content { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+  .empty-state { font-size: 13px; color: var(--ink-faint); text-align: center; padding: 48px 0; }
+
+  .month-group { margin-top: 30px; }
+  .month-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .month-label {
+    font-family: "Barlow Condensed", sans-serif; font-size: 17px; font-weight: 700;
+    letter-spacing: 1.6px; text-transform: uppercase; color: var(--month-label); white-space: nowrap;
+  }
+  .month-rule { flex: 1; height: 1px; background: var(--border-strong); }
+  .rows { display: flex; flex-direction: column; gap: 8px; }
+
+  .card {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    padding: 10px 14px; background: #fff; border-radius: 10px; border: 1px solid var(--border);
+    transition: box-shadow 0.16s ease, border-color 0.16s ease;
+  }
+  .card-upcoming { border-left: 3px solid var(--accent); }
+  .card-upcoming:hover { box-shadow: 0 4px 14px oklch(0.4 0.03 20 / 0.1); border-color: var(--border-hover); }
+  .card-played {
+    background: transparent; border: none; border-radius: 0;
+    border-bottom: 1px dashed var(--border-dashed); border-left: 3px solid transparent;
+    padding: 10px 14px 10px 11px;
+  }
+
+  .card-left { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1 1 260px; }
+  .date-rail { flex: none; width: 62px; text-align: center; border-right: 1px solid var(--border); padding-right: 12px; }
+  .dow { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-faint); }
+  .day-num { font-family: "Barlow Condensed", sans-serif; font-size: 24px; line-height: 1.05; font-weight: 700; color: var(--ink); }
+  .time { font-size: 11px; color: var(--ink-subtle); font-variant-numeric: tabular-nums; }
+  .postponed-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.4px; color: var(--accent); }
+
+  .card-played .dow, .card-played .time { color: var(--past-dim); }
+  .card-played .day-num { color: var(--past-ink); font-weight: 600; }
+
+  .opponent { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto; padding-bottom: 16px; }
+  .kit-col { flex: none; width: 34px; position: relative; }
+  .kit-swatch { width: 34px; height: 34px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--border-hairline); }
+  .card-played .kit-swatch { filter: saturate(0.8); }
+  .kit-abbr {
+    position: absolute; top: 100%; left: 0; width: 100%; margin-top: 3px; text-align: center;
+    font-family: "Barlow Condensed", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: var(--ink-muted); line-height: 1;
+  }
+
+  .text-col { min-width: 0; }
+  .name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .name { font-size: 17px; letter-spacing: -0.2px; font-weight: 600; color: var(--ink); }
+  .card-played .name { font-weight: 500; color: var(--past-ink); }
+  .score-chip {
+    flex: none;
+    font-family: "Barlow Condensed", sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 1px;
+    line-height: 1.15; font-variant-numeric: tabular-nums; padding: 2px 10px; border-radius: 5px;
+    background: var(--score-bg); color: #fff;
+  }
+  .comp-row { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+  .comp-name { font-size: 12px; color: var(--ink-muted); }
+  .card-played .comp-name { color: var(--past-dim); }
+
+  .seats { display: flex; gap: 8px; flex: none; }
+  .seat { position: relative; z-index: 1; }
+  .seat.seat-open { z-index: 60; isolation: isolate; }
+
+  .seat-field {
+    display: flex; align-items: center; gap: 2px; box-sizing: border-box;
+    padding: 6px 5px 6px 11px; border-radius: 6px; width: 112px;
+    background: #fff; border: 1px solid oklch(0.86 0.01 20); box-shadow: inset 0 -1px 0 var(--border-strong);
+    transition: border-color 0.14s ease;
+  }
+  .seat-field-empty { background: var(--surface-muted); border: 1px dashed var(--border-empty); box-shadow: none; }
+  .seat-field:focus-within { border-color: var(--focus-ring); }
+
+  .seat-input {
+    width: 100%; min-width: 0; border: none; outline: none; background: transparent;
+    font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink-input); padding: 0;
+  }
+  .seat-caret {
+    flex: none; width: 18px; height: 18px; display: grid; place-items: center;
+    border: none; background: transparent; cursor: pointer; color: var(--ink-subtle); font-size: 9px; line-height: 1;
+  }
+
+  .seat-menu {
+    position: absolute; top: calc(100% + 4px); left: 0; min-width: 100%; z-index: 20;
+    background: #fff; border: 1px solid var(--border-tab); border-radius: 9px;
+    box-shadow: 0 8px 22px oklch(0.35 0.03 20 / 0.14); padding: 4px;
+    display: flex; flex-direction: column;
+  }
+  .seat-menu.menu-up { top: auto; bottom: calc(100% + 4px); }
+  .seat-menu.hidden { display: none; }
+  .seat-option {
+    display: block; padding: 8px 14px; border-radius: 6px;
+    font-family: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; text-align: left;
+    border: none; background: transparent; color: var(--ink-input); cursor: pointer;
+  }
+  .seat-option:hover { background: oklch(0.96 0.006 20); }
+  .seat-option-clear { border-top: 1px solid oklch(0.93 0.008 20); margin-top: 2px; padding-top: 9px; color: var(--ink-muted); }
+
+  .seat-locked {
+    display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+    padding: 6px 12px; width: 112px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    background: var(--surface-locked); border: 1px solid var(--border);
+    color: var(--past-ink);
+  }
+  .seat-locked-empty { color: var(--past-dim); }
+
+  .footnote { font-size: 12px; color: var(--ink-subtle); line-height: 1.6; margin-top: 28px; }
+
+  @media (max-width: 640px) {
+    .header { padding: 18px 16px 16px; }
+    .badge { width: 34px; height: 34px; font-size: 18px; }
+    .title { font-size: 24px; }
+    .stat-value { font-size: 22px; }
+    .filters { padding: 10px 16px; }
+    .content { padding: 0 16px; }
+    .card { padding: 8px 12px; }
+    .card-played { padding: 8px 12px 8px 9px; }
+    .date-rail { width: 46px; padding-right: 9px; }
+    .kit-col, .kit-swatch { width: 30px; }
+    .kit-swatch { height: 30px; }
+    .name { font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-left { flex: 1 1 100%; }
+    .seats { width: 100%; }
+    .seat-field, .seat-locked { width: 104px; }
+  }
+</style>
 </head>
-<body class="bg-gray-50 font-sans">
+<body>
 
 <div id="app">
-  <div class="min-h-screen flex items-center justify-center text-gray-400 text-sm">Loading fixtures…</div>
+  <div class="loading-state">Loading fixtures…</div>
 </div>
 
 <!-- ============================================================
@@ -33,41 +267,49 @@ const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 const docRef = doc(db, "liverpool-tickets", "data");
 
-/* ---------- Kit colours ---------- */
-const KITS = {
-  "Liverpool":              { primary: "#C8102E", trim: "#FFFFFF" },
-  "Nottingham Forest":      { primary: "#DD0000", trim: "#FFFFFF" },
-  "Fulham":                 { primary: "#FFFFFF", trim: "#1A1A1A", outline: true },
-  "AFC Bournemouth":        { primary: "#B50E12", trim: "#1A1A1A" },
-  "Aston Villa":            { primary: "#670E36", trim: "#95BFE5" },
-  "Ipswich Town":           { primary: "#0044A9", trim: "#FFFFFF" },
-  "Manchester City":        { primary: "#6CABDD", trim: "#1C2C5B" },
-  "Brentford":               { primary: "#D2001C", trim: "#FFFFFF" },
-  "Brighton & Hove Albion": { primary: "#0057B8", trim: "#FFFFFF" },
-  "Arsenal":                { primary: "#EF0107", trim: "#FFFFFF" },
-  "Manchester United":      { primary: "#F5F3F7", trim: "#4B2E5A", outline: true },
-  "Everton":                { primary: "#003399", trim: "#FFFFFF" },
-  "Sunderland":             { primary: "#EB172B", trim: "#FFFFFF" },
-  "Leeds United":           { primary: "#FFFFFF", trim: "#1D4EA8", outline: true },
-  "Tottenham Hotspur":      { primary: "#FFFFFF", trim: "#132257", outline: true },
-  "Coventry City":          { primary: "#78D0F2", trim: "#1A1A1A" },
-  "Crystal Palace":         { primary: "#1B458F", trim: "#C4122E" },
-  "Hull City":              { primary: "#1A1A1A", trim: "#F5A623" },
-  "Newcastle United":       { primary: "#1A1A1A", trim: "#FFFFFF" },
-  "Chelsea":                { primary: "#034694", trim: "#FFFFFF" },
-  "Atlético Madrid":        { primary: "#CB3524", trim: "#FFFFFF" },
-  "Villarreal":             { primary: "#FFE667", trim: "#274BA6" },
-  "FC Porto":               { primary: "#003DA5", trim: "#FFFFFF" },
-  "RC Lens":                { primary: "#FFD400", trim: "#C8102E" },
-};
-const DEFAULT_KIT = { primary: "#9CA3AF", trim: "#FFFFFF" };
+// Local preview never touches the live document - no reads, no writes.
+const IS_LOCAL_PREVIEW = ["localhost", "127.0.0.1", ""].includes(location.hostname);
 
-const COMP_COLORS = {
-  "Premier League": "#3D1560",
-  "Champions League": "#0A1A4D",
-  "Carabao Cup": "#00594C",
-  "FA Cup": "#8C1D40",
+/* ---------- Kit swatches (CSS gradients, not crests - trademarked) ---------- */
+const solid = (c) => c;
+const stripes = (a, b, w = 6) => `repeating-linear-gradient(90deg, ${a} 0 ${w}px, ${b} ${w}px ${w * 2}px)`;
+const halves = (a, b) => `linear-gradient(90deg, ${a} 50%, ${b} 50%)`;
+const trim = (base, hem) => `linear-gradient(180deg, ${base} 0 72%, ${hem} 72%)`;
+const trim2 = (base, hem1, hem2) => `linear-gradient(180deg, ${base} 0 64%, ${hem1} 64% 82%, ${hem2} 82%)`;
+const sash = (base, band) => `linear-gradient(115deg, ${base} 0 38%, ${band} 38% 62%, ${base} 62%)`;
+
+const CLUB_KITS = {
+  "Nottingham Forest":      { abbr: "NFO", kit: trim("oklch(0.46 0.2 22)", "oklch(0.97 0.003 250)") },
+  "Fulham":                 { abbr: "FUL", kit: trim("oklch(0.97 0.003 250)", "oklch(0.25 0.01 250)") },
+  "Manchester City":        { abbr: "MCI", kit: solid("oklch(0.78 0.09 230)") },
+  "Brighton & Hove Albion": { abbr: "BHA", kit: stripes("oklch(0.5 0.15 255)", "oklch(0.97 0.003 250)", 5) },
+  "Arsenal":                { abbr: "ARS", kit: "linear-gradient(90deg, oklch(0.97 0.003 250) 0 6px, oklch(0.52 0.2 28) 6px calc(100% - 6px), oklch(0.97 0.003 250) calc(100% - 6px))" },
+  "Manchester United":      { abbr: "MUN", kit: trim2("oklch(0.54 0.2 32)", "oklch(0.97 0.003 250)", "oklch(0.2 0.01 20)") },
+  "Sunderland":             { abbr: "SUN", kit: stripes("oklch(0.5 0.19 26)", "oklch(0.97 0.003 250)", 8) },
+  "Leeds United":           { abbr: "LEE", kit: trim("oklch(0.97 0.003 250)", "oklch(0.8 0.16 90)") },
+  "Tottenham Hotspur":      { abbr: "TOT", kit: trim("oklch(0.96 0.004 265)", "oklch(0.32 0.1 265)") },
+  "Coventry City":          { abbr: "COV", kit: solid("oklch(0.72 0.11 225)") },
+  "Crystal Palace":         { abbr: "CRY", kit: sash("oklch(0.97 0.003 250)", "oklch(0.45 0.16 270)") },
+  "Atlético Madrid":        { abbr: "ATM", kit: stripes("oklch(0.52 0.2 28)", "oklch(0.97 0.003 250)", 4) },
+  "Villarreal":             { abbr: "VIL", kit: trim("#FFE667", "#274BA6") },
+  "Everton":                { abbr: "EVE", kit: solid("#003399") },
+  "Hull City":              { abbr: "HUL", kit: trim("#1A1A1A", "#F5A623") },
+  "Aston Villa":            { abbr: "AVL", kit: trim("#670E36", "#95BFE5") },
+  "Ipswich Town":           { abbr: "IPS", kit: trim("#0044A9", "#FFFFFF") },
+  "Newcastle United":       { abbr: "NEW", kit: stripes("#1A1A1A", "#FFFFFF", 6) },
+  "Chelsea":                { abbr: "CHE", kit: sash("#034694", "#173F7A") },
+  "Brentford":              { abbr: "BRE", kit: stripes("#D2001C", "#FFFFFF", 6) },
+  "AFC Bournemouth":        { abbr: "BOU", kit: trim("#B50E12", "#1A1A1A") },
+  "FC Porto":               { abbr: "POR", kit: halves("#003DA5", "#FFFFFF") },
+  "RC Lens":                { abbr: "LEN", kit: stripes("#FFD400", "#C8102E", 7) },
 };
+const DEFAULT_CLUB_KIT = { abbr: "???", kit: "oklch(0.9 0.008 20)" };
+
+const ROSTER = ["Ian", "Brian", "Kev"];
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
 const DATA_VERSION = 5;
 
@@ -98,25 +340,33 @@ const SEED_FIXTURES = [
   { id: "pl-20270530-bou", competition: "Premier League", opponent: "AFC Bournemouth", date: "2027-05-30", kickoff: "16:00", status: "scheduled", score: null },
 ];
 
-const NAME_SUGGESTIONS = ["Brian", "Ian", "Kev"];
 let currentFixtures = [];
 let currentFilter = "All";
+let showPastMatches = true;
 
-function kitSvg(team, dimmed) {
-  const kit = KITS[team] || DEFAULT_KIT;
-  const opacity = dimmed ? 0.45 : 1;
-  return `<svg width="22" height="22" viewBox="0 0 52 52" style="opacity:${opacity}" class="flex-shrink-0">
-    <path d="M18 6 L26 12 L34 6 L44 12 L40 22 L34 19 L34 46 L18 46 L18 19 L12 22 L8 12 Z" fill="${kit.primary}" stroke="${kit.outline ? "#B8BCC4" : "none"}" stroke-width="${kit.outline ? 1.3 : 0}"/>
-    <path d="M22 6 C22 6 24 10 26 10 C28 10 30 6 30 6" fill="none" stroke="${kit.trim}" stroke-width="1.3"/>
-  </svg>`;
+function isPlayed(f) { return f.status === "FT" && !!f.score; }
+
+function dowLabel(dateStr) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short" });
 }
-
-function dateLabel(dateStr) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+function dayNum(dateStr) {
+  return String(new Date(dateStr + "T00:00:00").getDate());
+}
+function monthLabel(dateStr) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+}
+function seasonLabel() {
+  if (!currentFixtures.length) return "";
+  const year = new Date(currentFixtures[0].date + "T00:00:00").getFullYear();
+  return `${year}/${String((year + 1) % 100).padStart(2, "0")}`;
 }
 
 async function saveFixtures(fixtures) {
   currentFixtures = fixtures;
+  if (IS_LOCAL_PREVIEW) {
+    render();
+    return;
+  }
   try {
     await setDoc(docRef, { fixtures, lastUpdated: new Date().toISOString(), version: DATA_VERSION });
   } catch (err) {
@@ -129,103 +379,191 @@ function updateTicket(id, field, value) {
   saveFixtures(next);
 }
 
-function render() {
-  const filtered = currentFilter === "All" ? currentFixtures : currentFixtures.filter((f) => f.competition === currentFilter);
-  const comps = [];
-  currentFixtures.forEach((f) => { if (!comps.includes(f.competition)) comps.push(f.competition); });
+function renderSeat(f, field) {
+  const name = f[field] || "";
+  const key = `${f.id}:${field}`;
+  if (isPlayed(f)) {
+    const label = name || "Unused";
+    return `
+      <div class="seat">
+        <div class="seat-locked ${name ? "" : "seat-locked-empty"}">${escapeHtml(label)}</div>
+      </div>`;
+  }
+  const options = ROSTER.map((person) => `
+    <button type="button" class="seat-option" data-select="${escapeHtml(person)}">${escapeHtml(person)}</button>`
+  ).join("") + (name ? `
+    <button type="button" class="seat-option seat-option-clear" data-select="">Clear seat</button>` : "");
+  return `
+    <div class="seat" data-seat data-key="${escapeHtml(key)}">
+      <div class="seat-field ${name ? "" : "seat-field-empty"}">
+        <input type="text" class="seat-input" value="${escapeHtml(name)}" data-id="${escapeHtml(f.id)}" data-field="${field}" placeholder="Add name" aria-label="Ticket holder" autocomplete="off" />
+        <button type="button" class="seat-caret" data-caret aria-label="Choose name">▾</button>
+      </div>
+      <div class="seat-menu hidden" data-menu>${options}</div>
+    </div>`;
+}
 
-  const byComp = {};
-  filtered.forEach((f) => { (byComp[f.competition] = byComp[f.competition] || []).push(f); });
-  Object.values(byComp).forEach((arr) => arr.sort((a, b) => a.date.localeCompare(b.date)));
+function renderRow(f) {
+  const played = isPlayed(f);
+  const postponed = f.status === "postponed";
+  const club = CLUB_KITS[f.opponent] || DEFAULT_CLUB_KIT;
+  const scoreHtml = played ? `<span class="score-chip">${f.score.home}–${f.score.away}</span>` : "";
+  const timeHtml = postponed ? `<span class="postponed-tag">Postponed</span>` : escapeHtml(f.kickoff || "");
 
-  const filterHtml = ["All", ...comps].map((c) => `
-    <button data-filter="${c}" class="filter-btn text-sm px-3 py-1.5 rounded-full border ${c === currentFilter ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-300"}">${c}</button>
-  `).join("");
-
-  const groupsHtml = comps.filter((c) => byComp[c]).map((comp) => {
-    const rows = byComp[comp].map((f) => {
-      const played = f.status === "FT" && f.score;
-      const textClass = played ? "text-gray-400" : "text-gray-900";
-      return `
-      <div class="border-b border-gray-100 last:border-b-0 ${played ? "bg-gray-50/60" : ""}">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              ${kitSvg("Liverpool", played)}
-              <span class="font-medium ${textClass}">Liverpool</span>
-              ${played ? `<span class="text-sm text-gray-400">${f.score.home}-${f.score.away}</span>` : `<span class="text-sm text-gray-400">v</span>`}
-              <span class="font-medium ${textClass}">${f.opponent}</span>
-              ${kitSvg(f.opponent, played)}
-            </div>
-            <p class="text-xs text-gray-400 mt-0.5 ml-[26px]">${dateLabel(f.date)}${f.kickoff ? `, ${f.kickoff}` : ""}${f.status === "FT" ? " · FT" : ""}${f.status === "postponed" ? " · Postponed" : ""}</p>
+  return `
+    <div class="card ${played ? "card-played" : "card-upcoming"}">
+      <div class="card-left">
+        <div class="date-rail">
+          <div class="dow">${dowLabel(f.date)}</div>
+          <div class="day-num">${dayNum(f.date)}</div>
+          <div class="time">${timeHtml}</div>
+        </div>
+        <div class="opponent">
+          ${scoreHtml}
+          <div class="kit-col">
+            <div class="kit-swatch" style="background:${club.kit}" title="${escapeHtml(f.opponent)}"></div>
+            <div class="kit-abbr">${club.abbr}</div>
           </div>
-          <div class="flex gap-2 sm:flex-shrink-0">
-            <div class="relative w-full sm:w-28">
-              <input type="text" value="${f.ticket1 || ""}" data-id="${f.id}" data-field="ticket1" class="ticket-input w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-600" autocomplete="off" />
-              <div class="combo-panel hidden absolute z-20 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg overflow-hidden">
-                ${NAME_SUGGESTIONS.map((n) => `<div class="combo-option px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-100">${n}</div>`).join("")}
-              </div>
+          <div class="text-col">
+            <div class="name-row">
+              <span class="name">${escapeHtml(f.opponent)}</span>
             </div>
-            <div class="relative w-full sm:w-28">
-              <input type="text" value="${f.ticket2 || ""}" placeholder="Name" data-id="${f.id}" data-field="ticket2" class="ticket-input w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-600" autocomplete="off" />
-              <div class="combo-panel hidden absolute z-20 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg overflow-hidden">
-                ${NAME_SUGGESTIONS.map((n) => `<div class="combo-option px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-100">${n}</div>`).join("")}
-              </div>
+            <div class="comp-row">
+              <span class="comp-name">${escapeHtml(f.competition)}</span>
             </div>
           </div>
         </div>
-      </div>`;
-    }).join("");
-
-    return `
-    <div class="mb-6">
-      <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color:${COMP_COLORS[comp] || "#374151"}">${comp}</p>
-      <div class="ticket-group bg-white rounded-xl border border-gray-200 overflow-hidden" style="border-left:4px solid ${COMP_COLORS[comp] || "#9CA3AF"}">
-        ${rows}
+      </div>
+      <div class="seats">
+        ${renderSeat(f, "ticket1")}
+        ${renderSeat(f, "ticket2")}
       </div>
     </div>`;
+}
+
+function render() {
+  const comps = [];
+  currentFixtures.forEach((f) => { if (!comps.includes(f.competition)) comps.push(f.competition); });
+  const counts = {};
+  comps.forEach((c) => { counts[c] = 0; });
+  currentFixtures.forEach((f) => { counts[f.competition]++; });
+
+  const filtered = currentFixtures.filter((f) => currentFilter === "All" || f.competition === currentFilter);
+  const visible = filtered.filter((f) => showPastMatches || !isPlayed(f));
+
+  const groupOrder = [];
+  const byMonth = new Map();
+  visible.forEach((f) => {
+    const label = monthLabel(f.date);
+    if (!byMonth.has(label)) { byMonth.set(label, []); groupOrder.push(label); }
+    byMonth.get(label).push(f);
+  });
+
+  const groupsHtml = groupOrder.map((label) => `
+    <div class="month-group">
+      <div class="month-head">
+        <span class="month-label">${escapeHtml(label)}</span>
+        <span class="month-rule"></span>
+      </div>
+      <div class="rows">${byMonth.get(label).map(renderRow).join("")}</div>
+    </div>`).join("");
+
+  const tabsHtml = ["All", ...comps].map((c) => {
+    const isAll = c === "All";
+    const count = isAll ? currentFixtures.length : counts[c];
+    const label = isAll ? "All fixtures" : c;
+    return `
+      <button type="button" class="tab ${c === currentFilter ? "tab-active" : ""}" data-filter="${escapeHtml(c)}">
+        <span>${escapeHtml(label)}</span>
+        <span class="tab-count">${count}</span>
+      </button>`;
   }).join("");
 
+  const upcomingCount = currentFixtures.filter((f) => !isPlayed(f)).length;
+  const assignedCount = currentFixtures.reduce((n, f) => n + (f.ticket1 ? 1 : 0) + (f.ticket2 ? 1 : 0), 0);
+
   document.getElementById("app").innerHTML = `
-    <div class="min-h-screen bg-gray-50">
-      <header class="bg-red-700 text-white px-4 py-3 sticky top-0 z-30 shadow-sm">
-        <h1 class="text-lg font-semibold leading-tight">Liverpool Home Tickets</h1>
-      </header>
-      <main class="max-w-2xl mx-auto px-4 py-4">
-        <div class="flex gap-2 mb-4 flex-wrap">${filterHtml}</div>
-        ${groupsHtml || `<p class="text-sm text-gray-400 text-center py-12">No fixtures in this competition yet.</p>`}
-      </main>
+    <div class="page">
+      <div class="header">
+        <div class="header-inner">
+          <div class="header-left">
+            <div class="badge">LFC</div>
+            <div>
+              <div class="title">Home Tickets</div>
+              <div class="subtitle">Anfield · ${seasonLabel()} season</div>
+            </div>
+          </div>
+          <div class="stats">
+            <div class="stat"><div class="stat-value">${upcomingCount}</div><div class="stat-label">Upcoming</div></div>
+            <div class="stat"><div class="stat-value">${assignedCount}</div><div class="stat-label">Seats claimed</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="filters-inner">
+          <div class="tabs">${tabsHtml}</div>
+          <button type="button" class="toggle" id="pastToggle" role="switch" aria-checked="${showPastMatches}">
+            <span class="toggle-label">Show results</span>
+            <span class="toggle-track ${showPastMatches ? "toggle-on" : ""}"><span class="toggle-knob"></span></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+        ${groupsHtml || `<p class="empty-state">No fixtures in this competition yet.</p>`}
+        <div class="footnote">Type any name into a seat, or use the ▾ to pick ${ROSTER.slice(0, -1).join(", ")} or ${ROSTER[ROSTER.length - 1]}.</div>
+      </div>
     </div>`;
 
-  document.querySelectorAll(".filter-btn").forEach((btn) => {
+  wireInteractions();
+}
+
+function wireInteractions() {
+  document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => { currentFilter = btn.dataset.filter; render(); });
   });
-  document.querySelectorAll(".ticket-input").forEach((input) => {
-    const panel = input.nextElementSibling;
-    input.addEventListener("focus", (e) => {
-      e.target.select();
-      panel.classList.remove("hidden", "mt-1", "bottom-full", "mb-1");
-      const group = input.closest(".ticket-group");
-      const spaceBelow = group.getBoundingClientRect().bottom - e.target.getBoundingClientRect().bottom;
-      if (spaceBelow < panel.offsetHeight) {
-        panel.classList.add("bottom-full", "mb-1");
-      } else {
-        panel.classList.add("mt-1");
-      }
-    });
+
+  const toggle = document.getElementById("pastToggle");
+  if (toggle) toggle.addEventListener("click", () => { showPastMatches = !showPastMatches; render(); });
+
+  document.querySelectorAll("[data-seat]").forEach((seatEl) => {
+    const input = seatEl.querySelector(".seat-input");
+    const caret = seatEl.querySelector("[data-caret]");
+    const menu = seatEl.querySelector("[data-menu]");
+
+    const openMenu = () => {
+      const up = window.innerHeight - input.getBoundingClientRect().bottom < 170;
+      menu.classList.toggle("menu-up", up);
+      menu.classList.remove("hidden");
+      seatEl.classList.add("seat-open");
+    };
+    const closeMenu = () => {
+      menu.classList.add("hidden");
+      seatEl.classList.remove("seat-open");
+    };
+
+    input.addEventListener("focus", (e) => { e.target.select(); openMenu(); });
     input.addEventListener("blur", (e) => {
       const { id, field } = e.target.dataset;
       updateTicket(id, field, e.target.value.trim());
-      setTimeout(() => panel.classList.add("hidden"), 100);
+      setTimeout(closeMenu, 100);
     });
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
-    panel.querySelectorAll(".combo-option").forEach((opt) => {
+
+    caret.addEventListener("mousedown", (e) => e.preventDefault());
+    caret.addEventListener("click", () => {
+      if (menu.classList.contains("hidden")) input.focus(); else input.blur();
+    });
+
+    menu.querySelectorAll(".seat-option").forEach((opt) => {
       opt.addEventListener("mousedown", (e) => {
         e.preventDefault();
-        input.value = opt.textContent;
+        const value = opt.dataset.select;
+        input.value = value;
         const { id, field } = input.dataset;
-        updateTicket(id, field, opt.textContent);
-        panel.classList.add("hidden");
+        updateTicket(id, field, value);
+        closeMenu();
       });
     });
   });
@@ -233,6 +571,21 @@ function render() {
 
 /* ---------- Load + live sync ---------- */
 async function init() {
+  if (IS_LOCAL_PREVIEW) {
+    // Fake data only - the live Firestore doc is never read or written from localhost.
+    const FAKE_TICKETS = {
+      "pl-20260829-nfo": { ticket1: "Kev", ticket2: "" },
+      "ucl-20260909-atm": { ticket1: "Ian", ticket2: "Brian" },
+      "pl-20260912-ful": { ticket1: "", ticket2: "Kev" },
+    };
+    currentFixtures = SEED_FIXTURES.map((f) => ({
+      ...f,
+      ticket1: FAKE_TICKETS[f.id]?.ticket1 ?? "Brian",
+      ticket2: FAKE_TICKETS[f.id]?.ticket2 ?? "",
+    }));
+    render();
+    return;
+  }
   try {
     const snap = await getDoc(docRef);
     const stored = snap.exists() ? snap.data() : null;
@@ -273,9 +626,9 @@ async function init() {
       }
     });
   } catch (err) {
-    document.getElementById("app").innerHTML = `<div class="min-h-screen flex items-center justify-center text-red-600 text-sm px-6 text-center">
-      Couldn't connect to storage. Check the Firebase config at the top of this file has been filled in correctly.<br/><br/>
-      <span class="text-gray-400">${err.message}</span>
+    document.getElementById("app").innerHTML = `<div class="error-state">
+      Couldn't connect to storage. Check the Firebase config at the top of this file has been filled in correctly.
+      <div class="error-detail">${escapeHtml(err.message)}</div>
     </div>`;
   }
 }
