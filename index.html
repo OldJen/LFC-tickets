@@ -311,7 +311,7 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-const DATA_VERSION = 5;
+const DATA_VERSION = 6;
 
 const SEED_FIXTURES = [
   { id: "pl-20260829-nfo", competition: "Premier League", opponent: "Nottingham Forest", date: "2026-08-29", kickoff: "12:30", status: "FT", score: { home: 2, away: 2 } },
