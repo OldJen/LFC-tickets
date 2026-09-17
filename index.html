@@ -449,7 +449,8 @@ function render() {
   currentFixtures.forEach((f) => { counts[f.competition]++; });
 
   const filtered = currentFixtures.filter((f) => currentFilter === "All" || f.competition === currentFilter);
-  const visible = filtered.filter((f) => showPastMatches || !isPlayed(f));
+  const visible = filtered.filter((f) => showPastMatches || !isPlayed(f))
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   const groupOrder = [];
   const byMonth = new Map();
